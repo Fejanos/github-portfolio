@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<!--
+  Personal portfolio for János Fenyvesi
+  =====================================
+  A zero-dependency, single-page portfolio that pulls projects
+  and stats live from the GitHub API.
+
+  HOW TO UPDATE
+  -------------
+  1. Open app.js and edit the CONFIG object at the top.
+  2. Open this file (index.html) in a browser (or via a local server).
+  3. To change colors/fonts, see style.css (custom properties at :root).
+
+  No build step. No install. No framework.
+-->
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>János Fenyvesi — IT Educator</title>
+  <meta name="description" content="Personal portfolio of János Fenyvesi — IT educator and C# / Python developer. Live GitHub projects, stats, and contact in one place." />
+  <meta name="author" content="János Fenyvesi" />
+
+  <!-- Google Fonts — Syne (display) + DM Mono (code/badges) + Inter (body).
+       To swap fonts: replace the link href and update --font-* in style.css. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Site stylesheet. Every visual style lives in style.css. -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       Fallback for users with JavaScript disabled.
+       The site relies on JS to fetch GitHub data and render the UI,
+       so we show a friendly message instead of a blank page.
+       ============================================================ -->
+  <noscript>
+    <div class="noscript">
+      <h1>JavaScript required</h1>
+      <p>This portfolio fetches live data from the GitHub API. Please enable JavaScript and reload the page.</p>
+    </div>
+  </noscript>
+
+  <!-- ============================================================
+       Ambient background layers: gradient blobs, grid, noise.
+       Purely decorative — aria-hidden so screen readers skip them.
+       ============================================================ -->
+  <div class="ambient" aria-hidden="true">
+    <div class="ambient__grid"></div>
+    <div class="ambient__blob ambient__blob--a"></div>
+    <div class="ambient__blob ambient__blob--b"></div>
+    <div class="ambient__blob ambient__blob--c"></div>
+    <div class="ambient__noise"></div>
+  </div>
+
+  <!-- Skip-link for keyboard users: jumps past nav to main content. -->
+  <a href="#hero" class="skip-link">Skip to content</a>
+
+  <!-- ============================================================
+       NAVBAR
+       - Sticky, blur-backdrop, active-link highlight via IntersectionObserver.
+       - [data-brand-text] filled from CONFIG.name at runtime.
+       ============================================================ -->
+  <header class="nav" id="nav">
+    <a href="#hero" class="nav__brand" aria-label="Home">
+      <span class="nav__brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 18 L12 6 L20 18" />
+          <path d="M8 14 L16 14" />
+        </svg>
+      </span>
+      <span class="nav__brand-text" data-brand-text>portfolio</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a href="#hero" data-nav-link>Home</a>
+      <a href="#about" data-nav-link>About</a>
+      <a href="#projects" data-nav-link>Projects</a>
+      <a href="#stats" data-nav-link>Stats</a>
+      <a href="#contact" data-nav-link>Contact</a>
+      <span class="nav__indicator" aria-hidden="true"></span>
+    </nav>
+
+    <div class="nav__actions">
+      <!-- Theme toggle — persists choice via localStorage. -->
+      <button class="icon-btn" id="themeToggle" aria-label="Toggle light/dark theme" title="Toggle theme">
+        <svg class="icon icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <svg class="icon icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+        </svg>
+      </button>
+      <!-- Mobile menu toggle (shown below 960px). -->
+      <button class="nav__menu" id="menuToggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============================================================
+         HERO
+         - [data-name-first] / [data-name-last] filled from CONFIG.name.
+         - #typewriter is animated by app.js from CONFIG.typewriterPhrases.
+         ============================================================ -->
+    <section id="hero" class="section hero" data-screen-label="01 Hero">
+      <div class="hero__inner">
+        <div class="hero__eyebrow">
+          <span class="dot dot--live" aria-hidden="true"></span>
+          <span data-available-text>Available for new work</span>
+        </div>
+
+        <h1 class="hero__title">
+          <span class="hero__line">
+            <span class="hero__word" data-name-first>Your</span>
+            <span class="hero__word hero__word--accent" data-name-last>Name</span>
+          </span>
+          <span class="hero__line hero__line--type">
+            <span class="hero__prefix">&gt;&nbsp;</span><span id="typewriter" aria-live="polite"></span><span class="caret" aria-hidden="true"></span>
+          </span>
+        </h1>
+
+        <p class="hero__bio" data-bio>
+          Short bio from CONFIG.bio.
+        </p>
+
+        <div class="hero__cta">
+          <a href="#projects" class="btn btn--primary">
+            <span>View projects</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+          </a>
+          <a href="#contact" class="btn btn--ghost">
+            <span>Contact me</span>
+          </a>
+        </div>
+
+        <!-- Small meta strip under the hero. Values filled at runtime. -->
+        <dl class="hero__meta">
+          <div>
+            <dt>Based in</dt><dd data-location>Remote</dd>
+          </div>
+          <div>
+            <dt>Stack</dt><dd data-stack>—</dd>
+          </div>
+          <div>
+            <dt>Since</dt><dd data-since>—</dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Decorative terminal card. Values filled by app.js. -->
+      <aside class="hero__card" aria-label="Terminal preview">
+        <div class="term">
+          <div class="term__bar">
+            <span class="term__dot term__dot--red"></span>
+            <span class="term__dot term__dot--yellow"></span>
+            <span class="term__dot term__dot--green"></span>
+            <span class="term__title">~/portfolio — zsh</span>
+          </div>
+          <div class="term__body">
+            <p><span class="term__user">you</span><span class="term__host">@dev</span>:<span class="term__path">~</span>$ <span class="term__cmd">whoami</span></p>
+            <p class="term__out" data-term-name>—</p>
+            <p><span class="term__user">you</span><span class="term__host">@dev</span>:<span class="term__path">~</span>$ <span class="term__cmd">cat role.txt</span></p>
+            <p class="term__out" data-term-role>—</p>
+            <p><span class="term__user">you</span><span class="term__host">@dev</span>:<span class="term__path">~</span>$ <span class="term__cmd">gh api user --jq .public_repos</span></p>
+            <p class="term__out"><span class="term__num" data-term-repos>—</span></p>
+            <p><span class="term__user">you</span><span class="term__host">@dev</span>:<span class="term__path">~</span>$ <span class="term__cursor">▍</span></p>
+          </div>
+        </div>
+      </aside>
+
+      <div class="hero__scroll" aria-hidden="true">
+        <span>scroll</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ABOUT
+         - Avatar auto-fetched from GitHub if CONFIG.avatarUrl is empty.
+         - Skills list rendered by app.js from CONFIG.skills.
+         ============================================================ -->
+    <section id="about" class="section about" data-screen-label="02 About">
+      <header class="section__head">
+        <span class="section__num">/01</span>
+        <h2 class="section__title">About</h2>
+        <span class="section__rule" aria-hidden="true"></span>
+      </header>
+
+      <div class="about__grid">
+        <figure class="about__avatar">
+          <div class="about__avatar-frame">
+            <img id="avatarImg" alt="" />
+            <div class="about__avatar-fallback" aria-hidden="true">
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="32" cy="24" r="10"/>
+                <path d="M12 56c0-11 9-20 20-20s20 9 20 20"/>
+              </svg>
+            </div>
+          </div>
+          <figcaption class="about__avatar-caption">
+            <span class="dot dot--live" aria-hidden="true"></span>
+            <span>online</span>
+          </figcaption>
+        </figure>
+
+        <div class="about__body">
+          <p class="about__lead" data-about-lead>
+            Short lead paragraph from CONFIG.aboutLead.
+          </p>
+          <p class="about__text" data-about-text>
+            Longer paragraph from CONFIG.aboutText.
+          </p>
+
+          <div class="about__skills">
+            <h3 class="about__skills-title">Skills</h3>
+            <ul class="chips" id="skillsList" role="list"></ul>
+          </div>
+
+          <!-- Quick numeric facts — filled from CONFIG.facts. -->
+          <dl class="about__facts" id="factsList"></dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         PROJECTS
+         - Grid populated from GitHub API.
+         - #filters populated from discovered topics + languages.
+         - Skeleton cards shown while loading; error panel if API fails.
+         ============================================================ -->
+    <section id="projects" class="section projects" data-screen-label="03 Projects">
+      <header class="section__head">
+        <span class="section__num">/02</span>
+        <h2 class="section__title">Projects</h2>
+        <span class="section__rule" aria-hidden="true"></span>
+        <span class="section__meta" id="projectsMeta">Live from GitHub</span>
+      </header>
+
+      <div class="projects__toolbar">
+        <div class="filters" id="filters" role="tablist" aria-label="Filter projects"></div>
+        <div class="projects__sort">
+          <label for="sortSelect" class="visually-hidden">Sort</label>
+          <select id="sortSelect" class="select" aria-label="Sort projects">
+            <option value="stars">Most stars</option>
+            <option value="updated">Recently updated</option>
+            <option value="name">A — Z</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="cards" id="projectsGrid" aria-live="polite"></div>
+
+      <div class="projects__empty" id="projectsEmpty" hidden>
+        <p>No projects match this filter.</p>
+      </div>
+
+      <div class="projects__error" id="projectsError" hidden>
+        <div class="error-card">
+          <h3>Couldn't reach GitHub</h3>
+          <p id="errorMessage">The API returned an error or we're rate-limited.</p>
+          <button class="btn btn--ghost" id="retryBtn">Retry</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         STATS
+         - Total repos / stars / forks / followers.
+         - Language breakdown + recent pushes.
+         ============================================================ -->
+    <section id="stats" class="section stats" data-screen-label="04 Stats">
+      <header class="section__head">
+        <span class="section__num">/03</span>
+        <h2 class="section__title">Stats</h2>
+        <span class="section__rule" aria-hidden="true"></span>
+      </header>
+
+      <div class="stats__grid" id="statsGrid">
+        <article class="stat-card" data-stat="repos">
+          <span class="stat-card__label">Public repos</span>
+          <span class="stat-card__value" data-stat-value>—</span>
+          <span class="stat-card__spark" aria-hidden="true">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,22 15,18 30,20 45,10 60,14 75,6 100,2"/></svg>
+          </span>
+        </article>
+        <article class="stat-card" data-stat="stars">
+          <span class="stat-card__label">Total stars</span>
+          <span class="stat-card__value" data-stat-value>—</span>
+          <span class="stat-card__spark" aria-hidden="true">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,26 20,22 35,16 50,18 65,10 80,8 100,4"/></svg>
+          </span>
+        </article>
+        <article class="stat-card" data-stat="forks">
+          <span class="stat-card__label">Total forks</span>
+          <span class="stat-card__value" data-stat-value>—</span>
+          <span class="stat-card__spark" aria-hidden="true">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,20 18,24 32,18 46,22 60,16 78,18 100,12"/></svg>
+          </span>
+        </article>
+        <article class="stat-card" data-stat="followers">
+          <span class="stat-card__label">Followers</span>
+          <span class="stat-card__value" data-stat-value>—</span>
+          <span class="stat-card__spark" aria-hidden="true">
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,28 20,24 40,20 60,14 80,10 100,6"/></svg>
+          </span>
+        </article>
+      </div>
+
+      <div class="stats__detail">
+        <div class="panel">
+          <header class="panel__head">
+            <h3 class="panel__title">Top languages</h3>
+            <span class="panel__sub">by repository</span>
+          </header>
+          <ul class="langs" id="langsList" role="list"></ul>
+        </div>
+        <div class="panel">
+          <header class="panel__head">
+            <h3 class="panel__title">Recent activity</h3>
+            <span class="panel__sub">last 6 pushes</span>
+          </header>
+          <ul class="activity" id="activityList" role="list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         CONTACT
+         - Copy-to-clipboard email button.
+         - Social links rendered from CONFIG.socialLinks.
+         - Form submit opens the visitor's email client via mailto:
+           so the message actually lands in the inbox — no backend.
+         ============================================================ -->
+    <section id="contact" class="section contact" data-screen-label="05 Contact">
+      <header class="section__head">
+        <span class="section__num">/04</span>
+        <h2 class="section__title">Contact</h2>
+        <span class="section__rule" aria-hidden="true"></span>
+      </header>
+
+      <div class="contact__grid">
+        <div class="contact__intro">
+          <p class="contact__lead" data-contact-lead>
+            Got a project, a question, or just want to say hi? Drop a line.
+          </p>
+
+          <button class="email-btn" id="copyEmailBtn" aria-label="Copy email address to clipboard">
+            <span class="email-btn__label">Email</span>
+            <span class="email-btn__value" id="emailValue">—</span>
+            <span class="email-btn__icon" aria-hidden="true">
+              <svg class="icon icon--copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <svg class="icon icon--check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+          </button>
+
+          <ul class="socials" id="socials" role="list"></ul>
+        </div>
+
+        <form class="contact__form" id="contactForm" novalidate>
+          <div class="field">
+            <label for="f-name">Name</label>
+            <input id="f-name" name="name" type="text" required autocomplete="name" />
+            <span class="field__err" data-err></span>
+          </div>
+          <div class="field">
+            <label for="f-email">Email</label>
+            <input id="f-email" name="email" type="email" required autocomplete="email" />
+            <span class="field__err" data-err></span>
+          </div>
+          <div class="field">
+            <label for="f-subject">Subject</label>
+            <input id="f-subject" name="subject" type="text" />
+            <span class="field__err" data-err></span>
+          </div>
+          <div class="field">
+            <label for="f-message">Message</label>
+            <textarea id="f-message" name="message" rows="5" required></textarea>
+            <span class="field__err" data-err></span>
+          </div>
+          <div class="contact__submit">
+            <button type="submit" class="btn btn--primary">
+              <span>Send message</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+            <span class="contact__status" id="contactStatus" role="status"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__inner">
+      <span data-foot-name>© Your Name</span>
+      <span class="foot__sep" aria-hidden="true">/</span>
+      <span>Built with HTML, CSS &amp; a little JS.</span>
+      <span class="foot__spacer"></span>
+      <a href="#hero" class="foot__top">Back to top ↑</a>
+    </div>
+  </footer>
+
+  <!-- Toast — used by app.js for transient notifications. -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- All logic: CONFIG, GitHub API, rendering, filters, theme, etc. -->
+  <script src="app.js" defer></script>
+</body>
+</html>
